@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>토마스의 칸반 · KANBAN of Thomas G</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@300;400;500;600&family=Noto+Serif+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2eb;
+  --bg-2: #ebe7dc;
+  --paper: #faf8f3;
+  --paper-2: #f0ece1;
+  --ink: #1a1a1a;
+  --ink-2: #2b2520;
+  --ink-soft: #6c6760;
+  --ink-faint: #a8a39a;
+  --line: #d8d3c5;
+  --line-soft: #e6e1d2;
+  --accent: #2b2b2b;
+  --warn: #b45f3a;
+  --ok: #5a7a3c;
+  --shadow-sm: 0 1px 0 rgba(26,26,26,.04), 0 1px 3px rgba(26,26,26,.04);
+  --shadow-md: 0 2px 6px rgba(26,26,26,.06), 0 8px 24px rgba(26,26,26,.06);
+  --shadow-lift: 0 12px 32px rgba(26,26,26,.14);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Noto Serif KR", "Fraunces", Georgia, serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(rgba(150,135,110,.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+.serif-display { font-family: "Fraunces", "Noto Serif KR", Georgia, serif; }
+
+/* === Header === */
+header {
+  padding: 28px 40px 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.title-block { display: flex; align-items: baseline; gap: 22px; }
+.title-block .mark {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.title-block h1 {
+  font-family: "Fraunces", "Noto Serif KR", serif;
+  font-weight: 500;
+  font-size: 32px;
+  letter-spacing: -0.5px;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+  line-height: 1.1;
+}
+.title-block .sub {
+  font-family: "Fraunces", serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-variation-settings: "opsz" 9;
+}
+.header-right { display: flex; align-items: center; gap: 14px; }
+.sync-badge {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.sync-badge .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px rgba(90,122,60,.12);
+}
+.sync-badge.error .dot { background: var(--warn); box-shadow: 0 0 0 3px rgba(180,95,58,.12); }
+.sync-badge.syncing .dot { background: var(--ink-faint); box-shadow: 0 0 0 3px rgba(108,103,96,.12); animation: sync-pulse 1.2s ease-in-out infinite; }
+@keyframes sync-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* Auth */
+.auth-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+}
+.auth-avatar {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  overflow: hidden;
+}
+.auth-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.auth-name {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  color: var(--ink-2);
+  letter-spacing: 0.2px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.btn-mini {
+  background: none;
+  border: 1px solid var(--line);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  border-radius: 12px;
+  transition: all .15s;
+}
+.btn-mini:hover { color: var(--ink); border-color: var(--ink-faint); }
+.btn-login {
+  background: var(--ink);
+  color: var(--bg);
+  border: 1px solid var(--ink);
+  padding: 7px 14px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background .15s;
+}
+.btn-login:hover { background: var(--ink-2); }
+.btn-login .g-mark {
+  width: 14px; height: 14px;
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 10px;
+}
+.icon-btn {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  width: 36px; height: 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-2);
+  transition: all .15s;
+  font-size: 14px;
+  font-family: "JetBrains Mono", monospace;
+}
+.icon-btn:hover { background: var(--bg-2); border-color: var(--ink-faint); }
+
+/* === Board tabs === */
+.tabs-row {
+  padding: 16px 40px 0;
+  display: flex;
+  align-items: stretch;
+  gap: 22px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  flex-wrap: wrap;
+}
+.tabs-group { display: flex; gap: 2px; align-items: flex-end; flex-wrap: wrap; }
+.tab {
+  background: none;
+  border: none;
+  padding: 11px 16px 13px;
+  cursor: pointer;
+  font-family: "Noto Serif KR", serif;
+  font-size: 14px;
+  color: var(--ink-soft);
+  border-bottom: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color .15s, border-color .15s;
+}
+.tab:hover { color: var(--ink); }
+.tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+.tab .accent-dot { width: 8px; height: 8px; border-radius: 50%; }
+.tab .count {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 1px;
+}
+.tabs-divider { width: 1px; align-self: stretch; background: var(--line); margin: 6px 0; }
+.tab-virtual { font-family: "Fraunces", serif; font-style: italic; font-size: 13.5px; }
+
+.btn-ghost {
+  background: none;
+  border: 1px dashed var(--line);
+  padding: 7px 13px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 1.5px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-transform: uppercase;
+  align-self: center;
+  border-radius: 3px;
+  transition: all .15s;
+}
+.btn-ghost:hover { color: var(--ink); border-color: var(--ink-faint); border-style: solid; }
+
+/* === Board area === */
+.board-wrap { padding: 26px 40px 80px; min-height: calc(100vh - 200px); }
+.board-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.board-meta .meta-left {
+  display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+}
+.board-meta .quote {
+  font-family: "Fraunces", serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-2);
+  font-variation-settings: "opsz" 18;
+}
+.board-meta .stat {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.board-meta .meta-right { display: flex; gap: 10px; }
+
+.stages {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding-bottom: 14px;
+  scrollbar-width: thin;
+}
+.stage {
+  flex: 0 0 304px;
+  min-width: 304px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 260px);
+  transition: border-color .2s, box-shadow .2s;
+}
+.stage-header {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.stage-header h3 {
+  font-family: "Noto Serif KR", serif;
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.stage-meta {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.wip-badge {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-soft);
+  background: var(--bg);
+}
+.stage.over-wip {
+  border-color: var(--warn);
+  box-shadow: 0 0 0 1px var(--warn) inset;
+}
+.stage.over-wip .wip-badge {
+  border-color: var(--warn);
+  color: var(--warn);
+  background: rgba(180,95,58,.08);
+}
+.stage-cards {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 60px;
+}
+.stage-add {
+  padding: 10px;
+  border-top: 1px solid var(--line);
+}
+.stage-add button {
+  width: 100%;
+  background: none;
+  border: 1px dashed var(--line);
+  padding: 8px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  letter-spacing: 1.5px;
+  border-radius: 3px;
+  transition: all .15s;
+  text-transform: uppercase;
+}
+.stage-add button:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+/* === Card === */
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  padding: 12px 14px;
+  border-radius: 3px;
+  cursor: grab;
+  position: relative;
+  transition: transform .12s ease, box-shadow .15s ease, border-color .15s;
+}
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.card.dragging { opacity: .35; cursor: grabbing; }
+.card.priority-높음 { border-left-color: #8b3a3a; border-left-width: 4px; }
+.card.priority-보통 { border-left-color: var(--accent); }
+.card.priority-낮음 { border-left-color: var(--ink-faint); }
+.card.flow-병목 {
+  background: #fbf3ee;
+  border-color: rgba(180,95,58,.4);
+}
+.card-title {
+  font-family: "Noto Serif KR", serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.45;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--ink-soft);
+  letter-spacing: 0.3px;
+  flex-wrap: wrap;
+}
+.card-meta .date { display: inline-flex; align-items: center; gap: 4px; }
+.card-meta .date.overdue { color: var(--warn); font-weight: 600; }
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 9px;
+}
+.card-tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  background: var(--bg-2);
+  border-radius: 2px;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+.card-bottleneck {
+  position: absolute;
+  top: -7px; right: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8.5px;
+  background: var(--warn);
+  color: white;
+  padding: 2px 7px;
+  border-radius: 2px;
+  letter-spacing: 1.5px;
+}
+.card-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+.card-source .src-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.stage-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--ink-faint);
+  font-family: "Fraunces", serif;
+  font-style: italic;
+  font-size: 12px;
+}
+.stage-cards.drag-over {
+  background: rgba(26,26,26,.03);
+  outline: 1px dashed var(--ink-faint);
+  outline-offset: -4px;
+}
+
+/* === Modal === */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(26,26,26,.42);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--ink-2);
+  max-width: 580px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 4px;
+  box-shadow: var(--shadow-lift);
+}
+.modal-header {
+  padding: 22px 26px 14px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-header h2 {
+  font-family: "Fraunces", "Noto Serif KR", serif;
+  font-weight: 500;
+  font-size: 21px;
+  font-variation-settings: "opsz" 36;
+}
+.modal-body { padding: 22px 26px; }
+.modal-footer {
+  padding: 14px 26px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: var(--paper-2);
+}
+.field { margin-bottom: 16px; }
+.field label {
+  display: block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.field input[type="text"],
+.field input[type="number"],
+.field input[type="date"],
+.field textarea,
+.field select {
+  width: 100%;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 9px 12px;
+  font-family: "Noto Serif KR", serif;
+  font-size: 14px;
+  color: var(--ink);
+  border-radius: 3px;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  outline: none;
+  border-color: var(--ink-2);
+  box-shadow: 0 0 0 2px rgba(26,26,26,.06);
+}
+.field textarea { resize: vertical; min-height: 88px; font-family: "Noto Serif KR", serif; line-height: 1.6; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.btn {
+  background: var(--ink);
+  color: var(--bg);
+  border: 1px solid var(--ink);
+  padding: 9px 18px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background .15s;
+}
+.btn:hover { background: var(--ink-2); }
+.btn-secondary {
+  background: none;
+  color: var(--ink-2);
+  border-color: var(--line);
+}
+.btn-secondary:hover { background: var(--paper); }
+.btn-danger {
+  background: none;
+  color: var(--warn);
+  border-color: rgba(180,95,58,.4);
+}
+.btn-danger:hover {
+  background: rgba(180,95,58,.08);
+  border-color: var(--warn);
+}
+
+.color-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+.color-swatch {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  outline: 1px solid var(--line);
+  transition: outline-color .15s, transform .12s;
+}
+.color-swatch:hover { transform: scale(1.08); }
+.color-swatch.selected {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.stage-editor-list { display: flex; flex-direction: column; gap: 8px; }
+.stage-editor-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 36px;
+  gap: 8px;
+  align-items: center;
+}
+.stage-editor-row input {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 7px 10px;
+  font-family: "Noto Serif KR", serif;
+  font-size: 13px;
+  border-radius: 3px;
+}
+.stage-editor-row .remove {
+  background: none;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  padding: 6px;
+  color: var(--ink-soft);
+  border-radius: 3px;
+  font-family: "JetBrains Mono", monospace;
+}
+.stage-editor-row .remove:hover { color: var(--warn); border-color: var(--warn); }
+
+.archive-section { margin-bottom: 28px; }
+.archive-section h3 {
+  font-family: "Fraunces", "Noto Serif KR", serif;
+  font-weight: 500;
+  font-size: 17px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-variation-settings: "opsz" 24;
+}
+.archive-section h3 .label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+.archive-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.archive-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: box-shadow .15s, transform .12s;
+}
+.archive-card.aborted { opacity: .68; border-left: 3px solid var(--ink-faint); }
+.archive-card.done { border-left: 3px solid var(--ok); }
+.archive-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.archive-card .title { font-family: "Noto Serif KR", serif; font-size: 13.5px; margin-bottom: 6px; }
+.archive-card .meta {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--ink-soft);
+  letter-spacing: 0.5px;
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+
+footer {
+  padding: 22px 40px 32px;
+  border-top: 1px solid var(--line);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 1px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+footer .quote {
+  font-family: "Fraunces", serif;
+  font-style: italic;
+  font-size: 12px;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  font-variation-settings: "opsz" 12;
+}
+
+@media (max-width: 720px) {
+  header, .tabs-row, .board-wrap, footer { padding-left: 18px; padding-right: 18px; }
+  .title-block { gap: 14px; flex-wrap: wrap; }
+  .title-block h1 { font-size: 24px; }
+  .title-block .sub { display: none; }
+  .stages { gap: 12px; }
+  .stage { flex: 0 0 86vw; min-width: 86vw; }
+  .field-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <div>
+      <div class="mark">KANBAN of</div>
+      <h1>토마스의 칸반</h1>
+    </div>
+    <div class="sub">— flow & rest, Thomas G</div>
+  </div>
+  <div class="header-right">
+    <div class="sync-badge" id="syncBadge"><span class="dot"></span>로컬 저장됨</div>
+    <div id="authBox"></div>
+    <button class="icon-btn" id="btnSettings" title="보드 설정">⚙</button>
+  </div>
+</header>
+
+<div class="tabs-row" id="tabsRow"></div>
+
+<main class="board-wrap" id="boardWrap"></main>
+
+<footer>
+  <div>로컬 저장 · 새로고침해도 유지됩니다 (브라우저별)</div>
+  <div class="quote">"흐름이 멈춘 자리, 그 자리가 곧 알아차림이다"</div>
+</footer>
+
+<div id="modalRoot"></div>
+
+<script type="module">
+/* =========================================================
+   토마스의 칸반 — Firebase 실시간 동기화 + localStorage 백업
+   ========================================================= */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  initializeFirestore, doc, getDoc, setDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBdTn7C7pQ0Idg6KJGoYkH9FCBLnwdFBAk",
+  authDomain: "thomas-kanban.firebaseapp.com",
+  projectId: "thomas-kanban",
+  storageBucket: "thomas-kanban.firebasestorage.app",
+  messagingSenderId: "742484729578",
+  appId: "1:742484729578:web:bd0d2777ed90e84e308193"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = initializeFirestore(fbApp, { ignoreUndefinedProperties: true });
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: "select_account" });
+
+let currentUser = null;
+let userDocRef = null;
+let unsubSnapshot = null;
+let applyingRemote = false;
+let saveTimer = null;
+
+const STORAGE_KEY = "thomas_kanban_v1";
+const PRIORITY_LIST = ["높음","보통","낮음"];
+
+const PALETTE = [
+  { name: "차콜",     color: "#2b2b2b", bg: "#e8e6e0" },
+  { name: "슬레이트", color: "#3d4f5e", bg: "#e2e6ea" },
+  { name: "와인",     color: "#7a3a3a", bg: "#ede0dd" },
+  { name: "올리브",   color: "#5a6440", bg: "#e6e8db" },
+  { name: "코퍼",     color: "#8a5a35", bg: "#ede1d4" },
+  { name: "딥블루",   color: "#2c3e50", bg: "#dde3ea" },
+  { name: "포레스트", color: "#3a5a3a", bg: "#dde6dd" },
+  { name: "잉크",     color: "#1a1a1a", bg: "#e0ddd6" }
+];
+
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const nowISO = () => new Date().toISOString();
+function daysBetween(a, b) {
+  const da = new Date(a), db = new Date(b);
+  return Math.floor((db - da) / (1000*60*60*24));
+}
+
+let state = {
+  boards: [],
+  activeBoardId: null,
+  viewMode: "board",
+};
+
+function defaultBoards() {
+  const mk = (name, palIdx) => {
+    const p = PALETTE[palIdx];
+    return {
+      id: uid(),
+      name,
+      accentColor: p.color,
+      accentBg: p.bg,
+      stages: [
+        { id: uid(), name: "백로그",  wipLimit: 0 },
+        { id: uid(), name: "진행중",  wipLimit: 3 },
+        { id: uid(), name: "검토",    wipLimit: 2 },
+        { id: uid(), name: "완료",    wipLimit: 0 },
+      ],
+      cards: [],
+      autoArchiveDays: 3,
+      autoArchiveEnabled: true,
+    };
+  };
+  return [ mk("업무", 0), mk("개발", 1), mk("코칭", 2), mk("강의", 3) ];
+}
+
+/* ---------- 영속성 (try/catch — 아티팩트/시크릿 모드에서도 안전) ---------- */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.boards)) {
+      state = parsed;
+      return true;
+    }
+  } catch (e) { /* ignore — in-memory only */ }
+  return false;
+}
+function saveState() {
+  // 1) 로컬은 항상 저장 (오프라인 대비, 비로그인 시에도 유지)
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  // 2) 로그인 상태면 원격에도 저장 (원격 적용 중인 변경은 echo 방지)
+  if (currentUser && !applyingRemote) {
+    saveRemote();
+  } else if (!currentUser) {
+    setSync("local");
+  }
+}
+function setSync(mode) {
+  const el = document.getElementById("syncBadge");
+  if (!el) return;
+  el.classList.remove("error", "syncing");
+  if (mode === "local") {
+    el.innerHTML = '<span class="dot"></span>로컬 저장 (로그인하면 동기화)';
+  } else if (mode === "synced") {
+    el.innerHTML = '<span class="dot"></span>클라우드 동기화됨';
+  } else if (mode === "syncing") {
+    el.classList.add("syncing");
+    el.innerHTML = '<span class="dot"></span>동기화 중…';
+  } else if (mode === "error") {
+    el.classList.add("error");
+    el.innerHTML = '<span class="dot"></span>동기화 실패';
+  }
+}
+
+/* ---------- Firebase: 직렬화 안전망 + 원격 저장 (디바운스) ---------- */
+function sanitize(obj) {
+  // undefined 제거 + 깊은 복제 (명세서 버그 2 방지)
+  return JSON.parse(JSON.stringify(obj));
+}
+function saveRemote() {
+  if (!userDocRef) return;
+  clearTimeout(saveTimer);
+  setSync("syncing");
+  saveTimer = setTimeout(async () => {
+    try {
+      await setDoc(userDocRef, sanitize(state));
+      setSync("synced");
+    } catch (e) {
+      console.error("[firestore] 저장 실패:", e);
+      setSync("error");
+    }
+  }, 400);
+}
+
+/* ---------- Firebase: Auth ---------- */
+async function doLogin() {
+  try {
+    setSync("syncing");
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    console.error("[auth] 로그인 실패:", e);
+    setSync(currentUser ? "synced" : "local");
+    if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
+      alert("로그인에 실패했습니다.\n" + (e.message || e.code || ""));
+    }
+  }
+}
+async function doLogout() {
+  try {
+    if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
+    await signOut(auth);
+  } catch (e) {
+    console.error("[auth] 로그아웃 실패:", e);
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  renderAuthUI();
+  if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
+
+  if (!user) {
+    userDocRef = null;
+    setSync("local");
+    return;
+  }
+
+  userDocRef = doc(db, "users", user.uid, "state", "main");
+  setSync("syncing");
+
+  try {
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      // 원격에 이미 데이터가 있음 → 원격을 진실로 채택
+      const remote = snap.data();
+      if (remote && Array.isArray(remote.boards)) {
+        applyingRemote = true;
+        state = remote;
+        if (!state.viewMode) state.viewMode = "board";
+        if (!state.activeBoardId || !state.boards.find(b => b.id === state.activeBoardId)) {
+          state.activeBoardId = state.boards[0]?.id || null;
+        }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+        applyingRemote = false;
+        runAutoArchive();
+        render();
+      }
+    } else {
+      // 원격이 비어 있음 → 현재 로컬을 원격에 업로드 (첫 동기화)
+      await setDoc(userDocRef, sanitize(state));
+    }
+
+    // 실시간 리스너 등록
+    unsubSnapshot = onSnapshot(userDocRef, (snap) => {
+      if (snap.metadata.hasPendingWrites) return; // 내 쓰기의 echo는 무시
+      if (!snap.exists()) return;
+      const remote = snap.data();
+      if (!remote || !Array.isArray(remote.boards)) return;
+      applyingRemote = true;
+      state = remote;
+      if (!state.viewMode) state.viewMode = "board";
+      if (!state.activeBoardId || !state.boards.find(b => b.id === state.activeBoardId)) {
+        state.activeBoardId = state.boards[0]?.id || null;
+      }
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+      applyingRemote = false;
+      runAutoArchive();
+      render();
+      setSync("synced");
+    }, (err) => {
+      console.error("[firestore] 리스너 오류:", err);
+      setSync("error");
+    });
+
+    setSync("synced");
+    render();
+  } catch (e) {
+    console.error("[firestore] 초기 로드 실패:", e);
+    setSync("error");
+  }
+});
+
+function renderAuthUI() {
+  const box = document.getElementById("authBox");
+  if (!box) return;
+  if (currentUser) {
+    const name = currentUser.displayName || currentUser.email || "사용자";
+    const initial = name.charAt(0).toUpperCase();
+    const photo = currentUser.photoURL;
+    box.innerHTML = `
+      <div class="auth-user">
+        <span class="auth-avatar">${photo ? `<img src="${escapeAttr(photo)}" alt="" />` : escapeHtml(initial)}</span>
+        <span class="auth-name">${escapeHtml(name)}</span>
+        <button class="btn-mini" id="btnLogout">로그아웃</button>
+      </div>
+    `;
+    document.getElementById("btnLogout").onclick = doLogout;
+  } else {
+    box.innerHTML = `<button class="btn-login" id="btnLogin"><span class="g-mark">G</span>Google 로그인</button>`;
+    document.getElementById("btnLogin").onclick = doLogin;
+  }
+}
+
+/* ---------- 초기화 ---------- */
+function init() {
+  const loaded = loadState();
+  if (!loaded || state.boards.length === 0) {
+    state.boards = defaultBoards();
+    state.activeBoardId = state.boards[0].id;
+    // 로컬에 기본 보드 즉시 저장 (원격은 onAuthStateChanged가 처리)
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  if (!state.activeBoardId || !state.boards.find(b => b.id === state.activeBoardId)) {
+    state.activeBoardId = state.boards[0]?.id || null;
+  }
+  if (!state.viewMode) state.viewMode = "board";
+  runAutoArchive();
+  document.getElementById("btnSettings").onclick = () => openBoardSettings();
+  renderAuthUI();
+  setSync("local"); // 시작은 로컬 모드, 로그인되면 onAuthStateChanged가 갱신
+  render();
+}
+
+/* ---------- 자동 보관 ---------- */
+function runAutoArchive() {
+  const now = nowISO();
+  let changed = false;
+  for (const b of state.boards) {
+    if (!b.autoArchiveEnabled) continue;
+    if (!b.stages.length) continue;
+    const lastStageId = b.stages[b.stages.length-1].id;
+    const days = b.autoArchiveDays ?? 3;
+    for (const c of b.cards) {
+      if (c.archiveStatus) continue;
+      if (c.stageId === lastStageId) {
+        const ref = c.lastStageAt || c.endDate || todayISO();
+        if (daysBetween(ref, now) >= days) {
+          c.archiveStatus = "done";
+          c.archivedAt = now;
+          changed = true;
+        }
+      }
+    }
+  }
+  if (changed) saveState();
+}
+
+/* ---------- Helpers ---------- */
+function getBoard(id) { return state.boards.find(b => b.id === id); }
+function activeBoard() { return getBoard(state.activeBoardId); }
+function activeCards(b) { return b.cards.filter(c => !c.archiveStatus); }
+function archivedCards(b) { return b.cards.filter(c => c.archiveStatus); }
+
+function recomputeFlow(b) {
+  for (const stage of b.stages) {
+    const cardsHere = activeCards(b).filter(c => c.stageId === stage.id);
+    const over = stage.wipLimit && stage.wipLimit > 0 && cardsHere.length > stage.wipLimit;
+    for (const c of cardsHere) {
+      if (over) c.flowStatus = "병목";
+      else if (c.flowStatus === "병목") c.flowStatus = "원활";
+    }
+  }
+}
+
+/* ---------- 렌더 ---------- */
+function render() {
+  for (const b of state.boards) recomputeFlow(b);
+  renderTabs();
+  renderMain();
+}
+
+function renderTabs() {
+  const wrap = document.getElementById("tabsRow");
+  wrap.innerHTML = "";
+
+  const group = document.createElement("div");
+  group.className = "tabs-group";
+
+  for (const b of state.boards) {
+    const btn = document.createElement("button");
+    btn.className = "tab" + (state.viewMode === "board" && b.id === state.activeBoardId ? " active" : "");
+    btn.innerHTML = `<span class="accent-dot" style="background:${b.accentColor}"></span>${escapeHtml(b.name)} <span class="count">${activeCards(b).length}</span>`;
+    btn.onclick = () => { state.activeBoardId = b.id; state.viewMode = "board"; saveState(); render(); };
+    group.appendChild(btn);
+  }
+
+  const addBtn = document.createElement("button");
+  addBtn.className = "btn-ghost";
+  addBtn.textContent = "+ 새 보드";
+  addBtn.onclick = () => openNewBoardModal();
+  group.appendChild(addBtn);
+
+  wrap.appendChild(group);
+
+  const div = document.createElement("div");
+  div.className = "tabs-divider";
+  wrap.appendChild(div);
+
+  const vGroup = document.createElement("div");
+  vGroup.className = "tabs-group";
+  const virtuals = [
+    { mode: "virtual:all",   label: "전체 보기" },
+    { mode: "virtual:today", label: "오늘 마감" },
+    { mode: "virtual:week",  label: "이번 주" },
+    { mode: "archive",       label: "아카이브" },
+  ];
+  for (const v of virtuals) {
+    const b = document.createElement("button");
+    b.className = "tab tab-virtual" + (state.viewMode === v.mode ? " active" : "");
+    b.textContent = v.label;
+    b.onclick = () => { state.viewMode = v.mode; saveState(); render(); };
+    vGroup.appendChild(b);
+  }
+  wrap.appendChild(vGroup);
+}
+
+function renderMain() {
+  const wrap = document.getElementById("boardWrap");
+  wrap.innerHTML = "";
+
+  if (state.viewMode === "archive") return renderArchive(wrap);
+  if (state.viewMode.startsWith("virtual:")) return renderVirtual(wrap, state.viewMode);
+
+  const b = activeBoard();
+  if (!b) {
+    wrap.innerHTML = '<div style="padding:40px; color:var(--ink-soft); font-style:italic;">보드가 없습니다. 위에서 "+ 새 보드"를 눌러 시작하세요.</div>';
+    return;
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "board-meta";
+  const totalCards = activeCards(b).length;
+  meta.innerHTML = `
+    <div class="meta-left">
+      <span class="accent-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${b.accentColor};margin-right:2px;"></span>
+      <span class="quote">${escapeHtml(b.name)}의 흐름</span>
+      <span class="stat">활성 ${totalCards} · 단계 ${b.stages.length}${b.autoArchiveEnabled ? " · 자동보관 " + (b.autoArchiveDays ?? 3) + "일" : ""}</span>
+    </div>
+  `;
+  const metaRight = document.createElement("div");
+  metaRight.className = "meta-right";
+  const editStagesBtn = document.createElement("button");
+  editStagesBtn.className = "btn-ghost";
+  editStagesBtn.textContent = "보드 설정";
+  editStagesBtn.onclick = () => openBoardSettings();
+  metaRight.appendChild(editStagesBtn);
+  meta.appendChild(metaRight);
+  wrap.appendChild(meta);
+
+  const stages = document.createElement("div");
+  stages.className = "stages";
+  for (const s of b.stages) stages.appendChild(renderStage(b, s));
+  wrap.appendChild(stages);
+}
+
+function renderStage(b, s) {
+  const cards = activeCards(b).filter(c => c.stageId === s.id);
+  const isOver = s.wipLimit && s.wipLimit > 0 && cards.length > s.wipLimit;
+  const stage = document.createElement("section");
+  stage.className = "stage" + (isOver ? " over-wip" : "");
+  stage.dataset.stageId = s.id;
+  stage.dataset.boardId = b.id;
+
+  const header = document.createElement("div");
+  header.className = "stage-header";
+  header.innerHTML = `
+    <h3>${escapeHtml(s.name)}</h3>
+    <div class="stage-meta">
+      <span>${cards.length}${s.wipLimit ? " / " + s.wipLimit : ""}</span>
+      ${s.wipLimit ? `<span class="wip-badge">WIP ${s.wipLimit}</span>` : ""}
+    </div>
+  `;
+  stage.appendChild(header);
+
+  const cardsEl = document.createElement("div");
+  cardsEl.className = "stage-cards";
+  cardsEl.dataset.stageId = s.id;
+  cardsEl.dataset.boardId = b.id;
+
+  cardsEl.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    cardsEl.classList.add("drag-over");
+  });
+  cardsEl.addEventListener("dragleave", () => cardsEl.classList.remove("drag-over"));
+  cardsEl.addEventListener("drop", (e) => {
+    e.preventDefault();
+    cardsEl.classList.remove("drag-over");
+    const cardId = e.dataTransfer.getData("text/card-id");
+    const fromBoardId = e.dataTransfer.getData("text/board-id");
+    moveCard(cardId, fromBoardId, b.id, s.id);
+  });
+
+  if (cards.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "stage-empty";
+    empty.textContent = "비어 있음";
+    cardsEl.appendChild(empty);
+  } else {
+    for (const c of cards) cardsEl.appendChild(renderCard(b, c));
+  }
+  stage.appendChild(cardsEl);
+
+  const addWrap = document.createElement("div");
+  addWrap.className = "stage-add";
+  const addBtn = document.createElement("button");
+  addBtn.textContent = "+ 카드 추가";
+  addBtn.onclick = () => openCardModal(b.id, s.id, null);
+  addWrap.appendChild(addBtn);
+  stage.appendChild(addWrap);
+
+  return stage;
+}
+
+function renderCard(b, c, opts = {}) {
+  const el = document.createElement("article");
+  el.className = "card priority-" + (c.priority || "보통") + (c.flowStatus === "병목" ? " flow-병목" : "");
+  el.draggable = true;
+  el.dataset.cardId = c.id;
+
+  const ownerBoardId = c._originalBoardId || b.id;
+
+  el.addEventListener("dragstart", (e) => {
+    e.dataTransfer.setData("text/card-id", c.id);
+    e.dataTransfer.setData("text/board-id", ownerBoardId);
+    e.dataTransfer.effectAllowed = "move";
+    el.classList.add("dragging");
+  });
+  el.addEventListener("dragend", () => el.classList.remove("dragging"));
+  el.onclick = () => openCardModal(ownerBoardId, c.stageId, c.id);
+
+  const bottleneck = c.flowStatus === "병목" ? '<div class="card-bottleneck">병목</div>' : "";
+
+  let datesHtml = "";
+  if (c.startDate || c.endDate) {
+    const today = todayISO();
+    const overdue = c.endDate && c.endDate < today && !c.archiveStatus;
+    datesHtml = `<span class="date${overdue ? " overdue" : ""}">${c.startDate ? c.startDate.slice(5) : "—"} → ${c.endDate ? c.endDate.slice(5) : "—"}</span>`;
+  }
+
+  const priorityMark = c.priority === "높음" ? "● 높음" : (c.priority === "낮음" ? "○ 낮음" : "◐ 보통");
+
+  let source = "";
+  if (opts.showSource && c._originalBoardName) {
+    const srcBoard = state.boards.find(bb => bb.id === c._originalBoardId);
+    const color = srcBoard ? srcBoard.accentColor : "#a8a39a";
+    source = `<span class="card-source"><span class="src-dot" style="background:${color}"></span>${escapeHtml(c._originalBoardName)}</span>`;
+  }
+
+  let tagsHtml = "";
+  if (c.tags && c.tags.length) {
+    tagsHtml = '<div class="card-tags">' + c.tags.map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join("") + '</div>';
+  }
+
+  el.innerHTML = `
+    ${bottleneck}
+    <div class="card-title">${escapeHtml(c.title || "(제목 없음)")}</div>
+    <div class="card-meta">
+      <span>${priorityMark}</span>
+      ${datesHtml}
+      ${source}
+    </div>
+    ${tagsHtml}
+  `;
+  return el;
+}
+
+/* ---------- 가상 뷰 ---------- */
+function renderVirtual(wrap, mode) {
+  const all = [];
+  for (const b of state.boards) {
+    for (const c of activeCards(b)) {
+      all.push({ ...c, _originalBoardId: b.id, _originalBoardName: b.name });
+    }
+  }
+
+  let title = "전체 보기";
+  let filtered = all;
+  const today = todayISO();
+  if (mode === "virtual:today") {
+    title = "오늘 마감";
+    filtered = all.filter(c => c.endDate === today);
+  } else if (mode === "virtual:week") {
+    title = "이번 주 (오늘부터 7일)";
+    filtered = all.filter(c => {
+      if (!c.endDate) return false;
+      const d = daysBetween(today, c.endDate);
+      return d >= 0 && d <= 7;
+    });
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "board-meta";
+  meta.innerHTML = `
+    <div class="meta-left">
+      <span class="quote">${escapeHtml(title)}</span>
+      <span class="stat">${filtered.length} 카드 · ${state.boards.length} 보드</span>
+    </div>
+  `;
+  wrap.appendChild(meta);
+
+  if (mode === "virtual:all") {
+    for (const b of state.boards) {
+      const cardsOfBoard = filtered.filter(c => c._originalBoardId === b.id);
+      const section = document.createElement("div");
+      section.className = "archive-section";
+      section.innerHTML = `<h3><span class="accent-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${b.accentColor}"></span>${escapeHtml(b.name)} <span class="label">${cardsOfBoard.length} 카드</span></h3>`;
+      const grid = document.createElement("div");
+      grid.className = "archive-cards";
+      if (cardsOfBoard.length === 0) {
+        grid.innerHTML = '<div style="color:var(--ink-faint);font-style:italic;">— 비어 있음</div>';
+      } else {
+        cardsOfBoard.sort((x,y)=> (x.endDate||"").localeCompare(y.endDate||""));
+        for (const c of cardsOfBoard) grid.appendChild(renderCard(b, c, { showSource: false }));
+      }
+      section.appendChild(grid);
+      wrap.appendChild(section);
+    }
+    return;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "archive-cards";
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div style="color:var(--ink-faint);font-style:italic;padding:24px 0;">해당하는 카드가 없습니다.</div>';
+  } else {
+    filtered.sort((a,b) => (a.endDate||"").localeCompare(b.endDate||""));
+    for (const c of filtered) {
+      const srcBoard = state.boards.find(b => b.id === c._originalBoardId);
+      grid.appendChild(renderCard(srcBoard, c, { showSource: true }));
+    }
+  }
+  wrap.appendChild(grid);
+}
+
+/* ---------- 아카이브 ---------- */
+function renderArchive(wrap) {
+  const meta = document.createElement("div");
+  meta.className = "board-meta";
+  meta.innerHTML = `
+    <div class="meta-left">
+      <span class="quote">아카이브 내역</span>
+      <span class="stat">완료 · 중단</span>
+    </div>
+  `;
+  wrap.appendChild(meta);
+
+  let anything = false;
+  for (const b of state.boards) {
+    const done = archivedCards(b).filter(c => c.archiveStatus === "done");
+    const aborted = archivedCards(b).filter(c => c.archiveStatus === "aborted");
+    if (done.length === 0 && aborted.length === 0) continue;
+    anything = true;
+    const section = document.createElement("div");
+    section.className = "archive-section";
+    section.innerHTML = `<h3><span class="accent-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${b.accentColor}"></span>${escapeHtml(b.name)} <span class="label">완료 ${done.length} · 중단 ${aborted.length}</span></h3>`;
+    const grid = document.createElement("div");
+    grid.className = "archive-cards";
+
+    for (const c of [...done, ...aborted].sort((x,y)=> (y.archivedAt||"").localeCompare(x.archivedAt||""))) {
+      const el = document.createElement("div");
+      el.className = "archive-card " + c.archiveStatus;
+      el.onclick = () => openCardModal(b.id, c.stageId, c.id);
+      el.innerHTML = `
+        <div class="title">${escapeHtml(c.title || "(제목 없음)")}</div>
+        <div class="meta">
+          <span>${c.archiveStatus === "done" ? "완료" : "중단"}</span>
+          <span>${(c.archivedAt||"").slice(0,10)}</span>
+        </div>
+      `;
+      grid.appendChild(el);
+    }
+    section.appendChild(grid);
+    wrap.appendChild(section);
+  }
+
+  if (!anything) {
+    const empty = document.createElement("div");
+    empty.style.cssText = "padding:50px 0;color:var(--ink-faint);font-style:italic;text-align:center;font-family:Fraunces,serif;font-size:14px;";
+    empty.textContent = "아직 보관된 카드가 없습니다.";
+    wrap.appendChild(empty);
+  }
+}
+
+/* ---------- 카드 이동 (가상 뷰에서도 안전) ---------- */
+function moveCard(cardId, _fromBoardId, toBoardId, toStageId) {
+  // 모든 보드를 스캔해 실제 소속 보드를 찾는다 (명세서 버그 1 방지)
+  let card = null, srcBoard = null;
+  for (const b of state.boards) {
+    const found = b.cards.find(c => c.id === cardId);
+    if (found) { card = found; srcBoard = b; break; }
+  }
+  if (!card || !srcBoard) return;
+  const dstBoard = getBoard(toBoardId) || srcBoard;
+  const dstStageId = dstBoard.stages.find(s => s.id === toStageId) ? toStageId : dstBoard.stages[0].id;
+
+  if (srcBoard.id === dstBoard.id) {
+    if (card.stageId !== dstStageId) {
+      card.stageId = dstStageId;
+      card.lastStageAt = nowISO();
+    }
+  } else {
+    srcBoard.cards = srcBoard.cards.filter(c => c.id !== cardId);
+    card.stageId = dstStageId;
+    card.lastStageAt = nowISO();
+    dstBoard.cards.push(card);
+  }
+  saveState();
+  render();
+}
+
+/* ---------- 모달 ---------- */
+function clearModal() { document.getElementById("modalRoot").innerHTML = ""; }
+function modalShell(title, bodyHtml, footerHtml) {
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>${title}</h2>
+          <button class="icon-btn" id="modalClose">✕</button>
+        </div>
+        <div class="modal-body">${bodyHtml}</div>
+        <div class="modal-footer">${footerHtml}</div>
+      </div>
+    </div>
+  `;
+  document.getElementById("modalBackdrop").onclick = (e) => { if (e.target.id === "modalBackdrop") clearModal(); };
+  document.getElementById("modalClose").onclick = clearModal;
+  document.querySelector(".modal").addEventListener("click", e => e.stopPropagation());
+}
+
+function openCardModal(boardId, stageId, cardId) {
+  const b = getBoard(boardId);
+  if (!b) return;
+  const isEdit = !!cardId;
+  let card = isEdit ? b.cards.find(c => c.id === cardId) : {
+    id: uid(),
+    title: "",
+    notes: "",
+    priority: "보통",
+    flowStatus: "원활",
+    startDate: todayISO(),
+    endDate: "",
+    tags: [],
+    stageId,
+    archiveStatus: null,
+    lastStageAt: nowISO(),
+  };
+  if (!card) return;
+
+  const stageOptions = b.stages.map(s => `<option value="${s.id}" ${s.id===card.stageId?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
+  const priorityOptions = PRIORITY_LIST.map(p => `<option value="${p}" ${p===card.priority?"selected":""}>${p}</option>`).join("");
+  const archiveBlock = isEdit ? `
+    <div class="field">
+      <label>상태</label>
+      <select id="f_archive">
+        <option value="" ${!card.archiveStatus?"selected":""}>활성</option>
+        <option value="done" ${card.archiveStatus==="done"?"selected":""}>완료 보관</option>
+        <option value="aborted" ${card.archiveStatus==="aborted"?"selected":""}>중단 보관</option>
+      </select>
+    </div>
+  ` : "";
+
+  const body = `
+    <div class="field">
+      <label>제목</label>
+      <input type="text" id="f_title" value="${escapeAttr(card.title)}" placeholder="무엇을 흐르게 할까요" />
+    </div>
+    <div class="field">
+      <label>메모</label>
+      <textarea id="f_notes" placeholder="맥락 · 다음 행동 · 열린 질문…">${escapeHtml(card.notes||"")}</textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>단계</label>
+        <select id="f_stage">${stageOptions}</select>
+      </div>
+      <div class="field">
+        <label>우선순위</label>
+        <select id="f_priority">${priorityOptions}</select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>시작일</label>
+        <input type="date" id="f_start" value="${escapeAttr(card.startDate||"")}" />
+      </div>
+      <div class="field">
+        <label>마감일</label>
+        <input type="date" id="f_end" value="${escapeAttr(card.endDate||"")}" />
+      </div>
+    </div>
+    <div class="field">
+      <label>태그 (쉼표로 구분)</label>
+      <input type="text" id="f_tags" value="${escapeAttr((card.tags||[]).join(", "))}" placeholder="예: 에듀스퀘어, 1on1, 글쓰기" />
+    </div>
+    ${archiveBlock}
+  `;
+  const footer = `
+    <div>${isEdit ? '<button class="btn btn-danger" id="btn_delete">삭제</button>' : ""}</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" id="btn_cancel">취소</button>
+      <button class="btn" id="btn_save">${isEdit ? "저장" : "추가"}</button>
+    </div>
+  `;
+  modalShell(isEdit ? "카드 편집" : "새 카드", body, footer);
+
+  document.getElementById("btn_cancel").onclick = clearModal;
+  document.getElementById("btn_save").onclick = () => {
+    const newStageId = document.getElementById("f_stage").value;
+    if (card.stageId !== newStageId) card.lastStageAt = nowISO();
+    card.title = document.getElementById("f_title").value.trim();
+    card.notes = document.getElementById("f_notes").value;
+    card.stageId = newStageId;
+    card.priority = document.getElementById("f_priority").value;
+    card.startDate = document.getElementById("f_start").value;
+    card.endDate = document.getElementById("f_end").value;
+    card.tags = document.getElementById("f_tags").value.split(",").map(s=>s.trim()).filter(Boolean);
+    if (isEdit) {
+      const archiveVal = document.getElementById("f_archive").value;
+      if (!archiveVal) {
+        if (card.archiveStatus) { card.archiveStatus = null; card.archivedAt = null; }
+      } else if (card.archiveStatus !== archiveVal) {
+        card.archiveStatus = archiveVal;
+        card.archivedAt = nowISO();
+      }
+    }
+    if (!isEdit) b.cards.push(card);
+    saveState();
+    clearModal();
+    render();
+  };
+  if (isEdit) {
+    document.getElementById("btn_delete").onclick = () => {
+      if (!confirm("이 카드를 영구 삭제할까요?")) return;
+      for (const bb of state.boards) {
+        const i = bb.cards.findIndex(c => c.id === card.id);
+        if (i >= 0) { bb.cards.splice(i,1); break; }
+      }
+      saveState();
+      clearModal();
+      render();
+    };
+  }
+}
+
+function openNewBoardModal() {
+  let selectedPal = 0;
+  const palHtml = PALETTE.map((p, i) => `<div class="color-swatch ${i===0?"selected":""}" data-idx="${i}" style="background:${p.color}" title="${p.name}"></div>`).join("");
+  const body = `
+    <div class="field">
+      <label>보드 이름</label>
+      <input type="text" id="nb_name" placeholder="예: 글쓰기 · 낭만북클럽 · EDUSQUARE …" />
+    </div>
+    <div class="field">
+      <label>색상</label>
+      <div class="color-swatches" id="nb_swatches">${palHtml}</div>
+    </div>
+  `;
+  const footer = `
+    <div></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" id="nb_cancel">취소</button>
+      <button class="btn" id="nb_save">만들기</button>
+    </div>
+  `;
+  modalShell("새 보드", body, footer);
+
+  document.querySelectorAll("#nb_swatches .color-swatch").forEach(el => {
+    el.onclick = () => {
+      selectedPal = parseInt(el.dataset.idx, 10);
+      document.querySelectorAll("#nb_swatches .color-swatch").forEach(e => e.classList.remove("selected"));
+      el.classList.add("selected");
+    };
+  });
+  document.getElementById("nb_cancel").onclick = clearModal;
+  document.getElementById("nb_save").onclick = () => {
+    const name = document.getElementById("nb_name").value.trim();
+    if (!name) { alert("보드 이름을 입력해 주세요."); return; }
+    const p = PALETTE[selectedPal];
+    const nb = {
+      id: uid(),
+      name,
+      accentColor: p.color,
+      accentBg: p.bg,
+      stages: [
+        { id: uid(), name: "백로그", wipLimit: 0 },
+        { id: uid(), name: "진행중", wipLimit: 3 },
+        { id: uid(), name: "검토",   wipLimit: 2 },
+        { id: uid(), name: "완료",   wipLimit: 0 },
+      ],
+      cards: [],
+      autoArchiveDays: 3,
+      autoArchiveEnabled: true,
+    };
+    state.boards.push(nb);
+    state.activeBoardId = nb.id;
+    state.viewMode = "board";
+    saveState();
+    clearModal();
+    render();
+  };
+}
+
+function openBoardSettings() {
+  const b = activeBoard();
+  if (!b) { openNewBoardModal(); return; }
+
+  const palHtml = PALETTE.map((p, i) => {
+    const sel = (p.color.toLowerCase() === (b.accentColor||"").toLowerCase()) ? " selected" : "";
+    return `<div class="color-swatch${sel}" data-idx="${i}" style="background:${p.color}" title="${p.name}"></div>`;
+  }).join("");
+
+  const stageRowsHtml = b.stages.map(s => `
+    <div class="stage-editor-row" data-stage-id="${s.id}">
+      <input type="text" class="se-name" value="${escapeAttr(s.name)}" placeholder="단계 이름" />
+      <input type="number" class="se-wip" min="0" value="${s.wipLimit||0}" />
+      <button class="remove" title="삭제">✕</button>
+    </div>
+  `).join("");
+
+  const body = `
+    <div class="field">
+      <label>보드 이름</label>
+      <input type="text" id="bs_name" value="${escapeAttr(b.name)}" />
+    </div>
+    <div class="field">
+      <label>색상</label>
+      <div class="color-swatches" id="bs_swatches">${palHtml}</div>
+    </div>
+    <div class="field">
+      <label>단계 (Stage) · WIP 0 은 제한 없음</label>
+      <div class="stage-editor-list" id="bs_stages">${stageRowsHtml}</div>
+      <button class="btn-ghost" id="bs_addstage" style="margin-top:10px;">+ 단계 추가</button>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>자동 보관</label>
+        <select id="bs_autoEnabled">
+          <option value="1" ${b.autoArchiveEnabled?"selected":""}>사용</option>
+          <option value="0" ${!b.autoArchiveEnabled?"selected":""}>끄기</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>잔류 일수 (마지막 단계)</label>
+        <input type="number" id="bs_autoDays" min="0" value="${b.autoArchiveDays ?? 3}" />
+      </div>
+    </div>
+  `;
+  const footer = `
+    <div><button class="btn btn-danger" id="bs_delete">보드 삭제</button></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" id="bs_cancel">취소</button>
+      <button class="btn" id="bs_save">저장</button>
+    </div>
+  `;
+  modalShell("보드 설정 · " + escapeHtml(b.name), body, footer);
+
+  let selectedPal = PALETTE.findIndex(p => p.color.toLowerCase() === (b.accentColor||"").toLowerCase());
+  if (selectedPal < 0) selectedPal = 0;
+  document.querySelectorAll("#bs_swatches .color-swatch").forEach(el => {
+    el.onclick = () => {
+      selectedPal = parseInt(el.dataset.idx, 10);
+      document.querySelectorAll("#bs_swatches .color-swatch").forEach(e => e.classList.remove("selected"));
+      el.classList.add("selected");
+    };
+  });
+
+  function attachStageRowEvents() {
+    document.querySelectorAll("#bs_stages .stage-editor-row .remove").forEach(btn => {
+      btn.onclick = () => {
+        if (document.querySelectorAll("#bs_stages .stage-editor-row").length <= 1) {
+          alert("최소 한 개의 단계는 있어야 합니다."); return;
+        }
+        btn.closest(".stage-editor-row").remove();
+      };
+    });
+  }
+  attachStageRowEvents();
+
+  document.getElementById("bs_addstage").onclick = () => {
+    const wrap = document.getElementById("bs_stages");
+    const div = document.createElement("div");
+    div.className = "stage-editor-row";
+    div.dataset.stageId = "new_" + uid();
+    div.innerHTML = `
+      <input type="text" class="se-name" value="새 단계" />
+      <input type="number" class="se-wip" min="0" value="0" />
+      <button class="remove" title="삭제">✕</button>
+    `;
+    wrap.appendChild(div);
+    attachStageRowEvents();
+  };
+
+  document.getElementById("bs_cancel").onclick = clearModal;
+
+  document.getElementById("bs_save").onclick = () => {
+    const newName = document.getElementById("bs_name").value.trim();
+    if (!newName) { alert("보드 이름을 입력해 주세요."); return; }
+    const p = PALETTE[selectedPal];
+    const rows = Array.from(document.querySelectorAll("#bs_stages .stage-editor-row"));
+    const newStages = rows.map(r => {
+      const sid = r.dataset.stageId;
+      const isNew = sid.startsWith("new_");
+      const name = r.querySelector(".se-name").value.trim() || "단계";
+      const wip = Math.max(0, parseInt(r.querySelector(".se-wip").value || "0", 10));
+      return { id: isNew ? uid() : sid, name, wipLimit: wip };
+    });
+    const newStageIds = new Set(newStages.map(s => s.id));
+    const fallback = newStages[0].id;
+    for (const c of b.cards) {
+      if (!newStageIds.has(c.stageId)) c.stageId = fallback;
+    }
+    b.name = newName;
+    b.accentColor = p.color;
+    b.accentBg = p.bg;
+    b.stages = newStages;
+    b.autoArchiveEnabled = document.getElementById("bs_autoEnabled").value === "1";
+    b.autoArchiveDays = Math.max(0, parseInt(document.getElementById("bs_autoDays").value || "3", 10));
+    saveState();
+    clearModal();
+    render();
+  };
+
+  document.getElementById("bs_delete").onclick = () => {
+    if (!confirm(`보드 "${b.name}"와 그 안의 모든 카드를 삭제할까요? 되돌릴 수 없습니다.`)) return;
+    state.boards = state.boards.filter(x => x.id !== b.id);
+    state.activeBoardId = state.boards[0]?.id || null;
+    saveState();
+    clearModal();
+    render();
+  };
+}
+
+/* ---------- Escape ---------- */
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+/* ---------- Boot ---------- */
+init();
+</script>
+</body>
+</html>

@@ -90,12 +90,53 @@ header {
 }
 .sync-badge .dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: var(--ok);
-  box-shadow: 0 0 0 3px rgba(90,122,60,.12);
+  background: var(--ink-faint);
+  box-shadow: 0 0 0 3px rgba(108,103,96,.10);
+  transition: background .2s, box-shadow .2s;
 }
-.sync-badge.error .dot { background: var(--warn); box-shadow: 0 0 0 3px rgba(180,95,58,.12); }
-.sync-badge.syncing .dot { background: var(--ink-faint); box-shadow: 0 0 0 3px rgba(108,103,96,.12); animation: sync-pulse 1.2s ease-in-out infinite; }
+.sync-badge.synced .dot { background: var(--ok); box-shadow: 0 0 0 3px rgba(90,122,60,.14); }
+.sync-badge.error .dot { background: var(--warn); box-shadow: 0 0 0 3px rgba(180,95,58,.14); }
+.sync-badge.syncing .dot { background: var(--ink-faint); animation: sync-pulse 1.2s ease-in-out infinite; }
 @keyframes sync-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* 비로그인 빈 화면 */
+.empty-auth {
+  text-align: center;
+  padding: 80px 24px 60px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.empty-auth .mark {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.empty-auth h2 {
+  font-family: "Fraunces", "Noto Serif KR", serif;
+  font-weight: 500;
+  font-size: 26px;
+  color: var(--ink);
+  margin-bottom: 18px;
+  font-variation-settings: "opsz" 48;
+  line-height: 1.35;
+}
+.empty-auth p {
+  font-family: "Noto Serif KR", serif;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+.empty-auth .quote {
+  margin-top: 36px;
+  font-family: "Fraunces", serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
 
 /* Auth */
 .auth-user {
@@ -709,7 +750,7 @@ footer .quote {
 
 <script type="module">
 /* =========================================================
-   토마스의 칸반 — Firebase 실시간 동기화 + localStorage 백업
+   토마스의 칸반 — Firebase Auth + Firestore 단일 출처
    ========================================================= */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -805,22 +846,20 @@ function loadState() {
   return false;
 }
 function saveState() {
-  // 1) 로컬은 항상 저장 (오프라인 대비, 비로그인 시에도 유지)
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-  // 2) 로그인 상태면 원격에도 저장 (원격 적용 중인 변경은 echo 방지)
+  // 데이터는 오직 로그인된 사용자의 Firestore에만 저장.
+  // 비로그인 상태에서는 어차피 UI가 잠겨 있어 변경 자체가 일어나지 않음.
   if (currentUser && !applyingRemote) {
     saveRemote();
-  } else if (!currentUser) {
-    setSync("local");
   }
 }
 function setSync(mode) {
   const el = document.getElementById("syncBadge");
   if (!el) return;
-  el.classList.remove("error", "syncing");
+  el.classList.remove("error", "syncing", "synced");
   if (mode === "local") {
-    el.innerHTML = '<span class="dot"></span>로컬 저장 (로그인하면 동기화)';
+    el.innerHTML = '<span class="dot"></span>로그인이 필요합니다';
   } else if (mode === "synced") {
+    el.classList.add("synced");
     el.innerHTML = '<span class="dot"></span>클라우드 동기화됨';
   } else if (mode === "syncing") {
     el.classList.add("syncing");
@@ -879,8 +918,12 @@ onAuthStateChanged(auth, async (user) => {
   if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
 
   if (!user) {
+    // 로그아웃 — 화면에서 모든 데이터를 즉시 지운다 (다른 사람이 볼 수 없게)
     userDocRef = null;
+    state = { boards: [], activeBoardId: null, viewMode: "board" };
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
     setSync("local");
+    render();
     return;
   }
 
@@ -889,23 +932,20 @@ onAuthStateChanged(auth, async (user) => {
 
   try {
     const snap = await getDoc(userDocRef);
-    if (snap.exists()) {
-      // 원격에 이미 데이터가 있음 → 원격을 진실로 채택
-      const remote = snap.data();
-      if (remote && Array.isArray(remote.boards)) {
-        applyingRemote = true;
-        state = remote;
-        if (!state.viewMode) state.viewMode = "board";
-        if (!state.activeBoardId || !state.boards.find(b => b.id === state.activeBoardId)) {
-          state.activeBoardId = state.boards[0]?.id || null;
-        }
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
-        applyingRemote = false;
-        runAutoArchive();
-        render();
+    if (snap.exists() && snap.data() && Array.isArray(snap.data().boards) && snap.data().boards.length > 0) {
+      // 원격에 데이터 있음 → 원격을 진실로 채택
+      applyingRemote = true;
+      state = snap.data();
+      if (!state.viewMode) state.viewMode = "board";
+      if (!state.activeBoardId || !state.boards.find(b => b.id === state.activeBoardId)) {
+        state.activeBoardId = state.boards[0]?.id || null;
       }
+      applyingRemote = false;
+      runAutoArchive();
     } else {
-      // 원격이 비어 있음 → 현재 로컬을 원격에 업로드 (첫 동기화)
+      // 원격이 비어 있음 (이 사용자의 첫 사용) → 기본 보드 4개 생성하고 업로드
+      state = { boards: defaultBoards(), activeBoardId: null, viewMode: "board" };
+      state.activeBoardId = state.boards[0].id;
       await setDoc(userDocRef, sanitize(state));
     }
 
@@ -921,7 +961,6 @@ onAuthStateChanged(auth, async (user) => {
       if (!state.activeBoardId || !state.boards.find(b => b.id === state.activeBoardId)) {
         state.activeBoardId = state.boards[0]?.id || null;
       }
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
       applyingRemote = false;
       runAutoArchive();
       render();
@@ -962,21 +1001,13 @@ function renderAuthUI() {
 
 /* ---------- 초기화 ---------- */
 function init() {
-  const loaded = loadState();
-  if (!loaded || state.boards.length === 0) {
-    state.boards = defaultBoards();
-    state.activeBoardId = state.boards[0].id;
-    // 로컬에 기본 보드 즉시 저장 (원격은 onAuthStateChanged가 처리)
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-  }
-  if (!state.activeBoardId || !state.boards.find(b => b.id === state.activeBoardId)) {
-    state.activeBoardId = state.boards[0]?.id || null;
-  }
-  if (!state.viewMode) state.viewMode = "board";
-  runAutoArchive();
+  // 비로그인 상태로 시작. onAuthStateChanged가 로그인된 사용자의 데이터를 채움.
+  state = { boards: [], activeBoardId: null, viewMode: "board" };
+  // 이전 버전이 남긴 로컬 잔재 자동 청소 (모든 데이터는 이제 Firestore에만)
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
   document.getElementById("btnSettings").onclick = () => openBoardSettings();
   renderAuthUI();
-  setSync("local"); // 시작은 로컬 모드, 로그인되면 onAuthStateChanged가 갱신
+  setSync("local");
   render();
 }
 
@@ -1031,6 +1062,7 @@ function render() {
 function renderTabs() {
   const wrap = document.getElementById("tabsRow");
   wrap.innerHTML = "";
+  if (!currentUser) return; // 비로그인 — 탭 없음
 
   const group = document.createElement("div");
   group.className = "tabs-group";
@@ -1076,6 +1108,19 @@ function renderTabs() {
 function renderMain() {
   const wrap = document.getElementById("boardWrap");
   wrap.innerHTML = "";
+
+  if (!currentUser) {
+    wrap.innerHTML = `
+      <div class="empty-auth">
+        <div class="mark">PRIVATE KANBAN</div>
+        <h2>로그인하시면 칸반이 열립니다</h2>
+        <p>이 칸반은 지평의 개인 작업 공간입니다.</p>
+        <p>우측 상단의 <b>Google 로그인</b>으로 시작하세요.</p>
+        <div class="quote">— flow & rest, Thomas G</div>
+      </div>
+    `;
+    return;
+  }
 
   if (state.viewMode === "archive") return renderArchive(wrap);
   if (state.viewMode.startsWith("virtual:")) return renderVirtual(wrap, state.viewMode);
